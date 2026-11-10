@@ -8,7 +8,10 @@
     "scheme": "cfd",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Aplikasi membutuhkan akses lokasi untuk menampilkan posisi Anda di peta dan menghitung jarak ke laporan kejadian."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +20,11 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "output": "server",
@@ -31,6 +38,12 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Izinkan $(PRODUCT_NAME) menggunakan lokasi Anda untuk menampilkan posisi di peta."
         }
       ]
     ],
