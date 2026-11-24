@@ -10,7 +10,9 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Aplikasi membutuhkan akses lokasi untuk menampilkan posisi Anda di peta dan menghitung jarak ke laporan kejadian."
+        "NSLocationWhenInUseUsageDescription": "Aplikasi membutuhkan akses lokasi untuk menampilkan posisi Anda di peta dan menghitung jarak ke laporan kejadian.",
+        "NSCameraUsageDescription": "Aplikasi membutuhkan izin kamera untuk memotret bukti kejadian secara langsung.",
+        "NSPhotoLibraryUsageDescription": "Aplikasi membutuhkan izin galeri untuk memilih foto bukti kejadian."
       }
     },
     "android": {
@@ -23,7 +25,9 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
       ]
     },
     "web": {
@@ -44,6 +48,14 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Izinkan $(PRODUCT_NAME) menggunakan lokasi Anda untuk menampilkan posisi di peta."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Izinkan aplikasi mengakses kamera untuk memotret bukti laporan kejadian.",
+          "photosPermission": "Izinkan aplikasi mengakses galeri foto untuk melampirkan bukti laporan."
         }
       ]
     ],

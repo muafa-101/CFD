@@ -2,11 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Location from 'expo-location';
 
 /**
- * Pertemuan 9 - Deliverable #2:
- * Custom Hook useLocationTracking dengan distanceInterval adaptif.
+ * Pertemuan 9 - Deliverable #2 & Pertemuan 10 Milestone 2:
+ * Custom Hook useLocationTracking dengan distanceInterval adaptif
+ * dan integrasi status izin Just-In-Time.
  *
  * Hook ini melakukan:
- * 1. Meminta izin lokasi dari pengguna
+ * 1. Memeriksa & meminta izin lokasi foreground pengguna (alur JIT)
  * 2. Melacak lokasi pengguna secara real-time
  * 3. Menggunakan distanceInterval adaptif berdasarkan kecepatan pengguna:
  *    - Diam (speed < 1 m/s): distanceInterval = 10m (hemat baterai)
@@ -28,7 +29,8 @@ interface UseLocationTrackingResult {
   errorMsg: string | null;
   isTracking: boolean;
   distanceInterval: number;
-  startTracking: () => Promise<void>;
+  permissionStatus: Location.PermissionStatus | 'undetermined';
+  startTracking: () => Promise<boolean>;
   stopTracking: () => void;
 }
 
@@ -51,17 +53,38 @@ export function useLocationTracking(): UseLocationTrackingResult {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [distanceInterval, setDistanceInterval] = useState(10);
+  const [permissionStatus, setPermissionStatus] = useState<
+    Location.PermissionStatus | 'undetermined'
+  >('undetermined');
   const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
 
+  // Periksa status izin saat inisialisasi tanpa langsung memunculkan dialog OS
+  useEffect(() => {
+    Location.getForegroundPermissionsAsync()
+      .then((res) => {
+        setPermissionStatus(res.status);
+      })
+      .catch(() => {});
+  }, []);
+
   // Memulai tracking lokasi
-  const startTracking = useCallback(async () => {
+  const startTracking = useCallback(async (): Promise<boolean> => {
     try {
-      // Minta izin lokasi foreground
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Izin akses lokasi ditolak. Aktifkan di pengaturan.');
-        return;
+      // Periksa status izin saat ini
+      let { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== Location.PermissionStatus.GRANTED) {
+        const req = await Location.requestForegroundPermissionsAsync();
+        status = req.status;
       }
+
+      setPermissionStatus(status);
+
+      if (status !== Location.PermissionStatus.GRANTED) {
+        setErrorMsg('Izin akses lokasi ditolak. Tekan untuk mengaktifkan.');
+        return false;
+      }
+
+      setErrorMsg(null);
 
       // Ambil lokasi awal
       const initialLocation = await Location.getCurrentPositionAsync({
@@ -83,6 +106,11 @@ export function useLocationTracking(): UseLocationTrackingResult {
       // Tentukan distanceInterval awal berdasarkan speed
       const initialInterval = getAdaptiveDistanceInterval(initialLocation.coords.speed);
       setDistanceInterval(initialInterval);
+
+      // Bersihkan subscription sebelumnya jika ada
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+      }
 
       // Subscribe ke perubahan lokasi dengan distanceInterval adaptif
       subscriptionRef.current = await Location.watchPositionAsync(
@@ -108,8 +136,12 @@ export function useLocationTracking(): UseLocationTrackingResult {
           setDistanceInterval(newInterval);
         }
       );
+
+      return true;
     } catch (error) {
-      setErrorMsg('Gagal mengakses lokasi: ' + (error as Error).message);
+      const msg = (error as Error).message;
+      setErrorMsg('Gagal mengakses lokasi: ' + msg);
+      return false;
     }
   }, []);
 
@@ -136,6 +168,7 @@ export function useLocationTracking(): UseLocationTrackingResult {
     errorMsg,
     isTracking,
     distanceInterval,
+    permissionStatus,
     startTracking,
     stopTracking,
   };
